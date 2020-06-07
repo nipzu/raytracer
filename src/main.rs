@@ -1,8 +1,6 @@
 mod renderer;
 mod scene;
 
-use nalgebra::Vector3;
-
 use renderer::Renderer;
 use scene::{Geometry, Material, Object, Scene};
 
@@ -34,7 +32,7 @@ fn main() {
         1,
         Object {
             geometry: Geometry::Sphere {
-                center: Vector3::new(-2.0, -2.0, 0.0),
+                center: [-2.0, -2.0, 0.0].into(),
                 radius: 1.0,
             },
             material: Material {
@@ -47,7 +45,7 @@ fn main() {
         3,
         Object {
             geometry: Geometry::Sphere {
-                center: Vector3::new(-3.0, 0.0, 2.0),
+                center: [-3.0, 0.0, 2.0].into(),
                 radius: 1.0,
             },
             material: Material {

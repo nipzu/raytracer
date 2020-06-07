@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use nalgebra::Vector3;
+use nalgebra::{Vector3, Point3};
 
 pub struct Scene {
     pub objects: HashMap<u64, Object>,
@@ -19,7 +19,7 @@ impl Default for Scene {
 }
 
 pub struct Camera {
-    pub position: Vector3<f64>,
+    pub position: Point3<f64>,
     pub forward: Vector3<f64>,
     pub up: Vector3<f64>,
     pub angle_x: f64,
@@ -49,12 +49,12 @@ pub struct Material {
 
 pub enum Geometry {
     Sphere {
-        center: Vector3<f64>,
+        center: Point3<f64>,
         radius: f64,
     },
     Triangle {
-        p1: Vector3<f64>,
-        p2: Vector3<f64>,
-        p3: Vector3<f64>,
+        p1: Point3<f64>,
+        p2: Point3<f64>,
+        p3: Point3<f64>,
     },
 }

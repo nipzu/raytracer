@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::scene::{Geometry, Object, Scene};
 
-use nalgebra::Vector3;
+use nalgebra::{Vector3, Point3};
 
 pub struct Renderer {
     pub output_file: PathBuf,
@@ -13,7 +13,7 @@ pub struct Renderer {
 
 #[derive(Debug)]
 struct Ray {
-    origin: Vector3<f64>,
+    origin: Point3<f64>,
     direction: Vector3<f64>,
 }
 
@@ -28,7 +28,7 @@ impl Renderer {
 
         let right = cam.forward.cross(&cam.up).normalize();
 
-        let s = cam.forward - x * right + y * cam.up;
+        let s = cam.position + cam.forward - x * right + y * cam.up;
 
         let dx = 2.0 * x / self.resolution_x as f64;
         let dy = 2.0 * y / self.resolution_y as f64;
@@ -157,7 +157,7 @@ fn get_intersection_dist(obj: &Object, ray: &Ray) -> Option<f64> {
             }
         }
         Geometry::Triangle { p1, p2, p3 } => {
-            let normal = get_intersection_normal(obj, Vector3::identity());
+            let normal = get_intersection_normal(obj, Point3::origin());
             let dist = (normal.dot(&(p1 - ray.origin))) / normal.dot(&ray.direction);
             let s = ray.origin + dist * ray.direction - p1;
             let d1 = p2 - p1;
@@ -175,14 +175,14 @@ fn get_intersection_dist(obj: &Object, ray: &Ray) -> Option<f64> {
     }
 }
 
-fn get_intersection_normal(obj: &Object, point: Vector3<f64>) -> Vector3<f64> {
+fn get_intersection_normal(obj: &Object, point: Point3<f64>) -> Vector3<f64> {
     match obj.geometry {
         Geometry::Sphere { center, radius } => (point - center) / radius,
         Geometry::Triangle { p1, p2, p3 } => ((p2 - p1).cross(&(p3 - p1))).normalize(),
     }
 }
 
-fn get_reflected_vector(obj: &Object, intersection: Vector3<f64>, ray_dir: Vector3<f64>) -> Ray {
+fn get_reflected_vector(obj: &Object, intersection: Point3<f64>, ray_dir: Vector3<f64>) -> Ray {
     let n = get_intersection_normal(obj, intersection);
     let w = n.dot(&ray_dir) / n.norm_squared() * n;
     Ray {
