@@ -9,24 +9,11 @@ fn main() {
         output_file: "rendered.png".into(),
         num_samples: 1,
 
-        resolution_x: 512,
-        resolution_y: 512,
+        resolution_x: 64,
+        resolution_y: 64,
     };
 
     let mut scene = Scene::default();
-
-    /*scene.objects.insert(
-        0,
-        Object {
-            geometry: Geometry::Sphere {
-                center: Vector3::new(-3.0, 1.0, 0.0),
-                radius: 1.0,
-            },
-            material: Material {
-                color: [0.5, 1.0, 1.0],
-            },
-        },
-    );*/
 
     scene.objects.insert(
         1,
@@ -35,7 +22,7 @@ fn main() {
                 center: [-2.0, -2.0, 0.0].into(),
                 radius: 1.0,
             },
-            material: Material {
+            material: Material::Emission {
                 color: [1.0, 0.5, 1.0],
             },
         },
@@ -48,7 +35,7 @@ fn main() {
                 center: [-3.0, 0.0, 2.0].into(),
                 radius: 1.0,
             },
-            material: Material {
+            material: Material::Diffuse {
                 color: [1.0, 1.0, 1.0],
             },
         },
@@ -58,11 +45,13 @@ fn main() {
         4,
         Object {
             geometry: Geometry::Triangle {
-                p1: [-2.0, 1.0, 0.0].into(),
-                p2: [-3.0, 0.0, 0.8].into(),
-                p3: [-3.1, -1.0, -1.0].into(),
+                p: [
+                    [-2.0, 1.0, 0.0].into(),
+                    [-3.0, 0.0, 0.8].into(),
+                    [-3.1, -1.0, -1.0].into(),
+                ],
             },
-            material: Material {
+            material: Material::Diffuse {
                 color: [0.5, 0.5, 0.5],
             },
         },

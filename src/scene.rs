@@ -12,7 +12,7 @@ impl Default for Scene {
     fn default() -> Self {
         Scene {
             objects: HashMap::new(),
-            sky_color: [1.0; 3],
+            sky_color: [0.1; 3],
             camera: Camera::default(),
         }
     }
@@ -42,19 +42,12 @@ pub struct Object {
     pub geometry: Geometry,
     pub material: Material,
 }
-
-pub struct Material {
-    pub color: [f64; 3],
+pub enum Material {
+    Diffuse { color: [f64; 3] },
+    Emission { color: [f64; 3] },
 }
 
 pub enum Geometry {
-    Sphere {
-        center: Point3<f64>,
-        radius: f64,
-    },
-    Triangle {
-        p1: Point3<f64>,
-        p2: Point3<f64>,
-        p3: Point3<f64>,
-    },
+    Sphere { center: Point3<f64>, radius: f64 },
+    Triangle { p: [Point3<f64>; 3] },
 }
