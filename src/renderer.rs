@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use crate::scene::{Geometry, Material, Object, Scene};
 
 use nalgebra::{Point3, Vector3};
+use rand::rngs::SmallRng;
 
 pub struct Renderer {
     pub output_file: PathBuf,
@@ -84,10 +85,10 @@ fn render_ray(scene: &Scene, ray: &Ray, ignore_id: u64) -> [f64; 3] {
                 let ag = 0.7
                     + 0.3
                         * (1.0
-                            - f64::cos(ray.direction.angle(&-get_intersection_normal(
+                            - ray.direction.dot(&-get_intersection_normal(
                                 obj,
                                 ray.origin + dist * ray.direction,
-                            ))))
+                            )))
                         .powf(5.0);
                 [ag * rr * or, ag * rg * og, ag * rb * ob]
             }
