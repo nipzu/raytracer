@@ -45,14 +45,28 @@ impl Renderer {
         dx: Vector3<f64>,
         dy: Vector3<f64>,
     ) -> [f64; 3] {
-        render_ray(
-            scene,
-            &Ray {
-                origin: scene.camera.position,
-                direction: (pixel_tl + 0.5 * (dx + dy)).normalize(),
-            },
-            0,
-        )
+        let mut result = Vec::new();
+        for (x, y) in [
+            (0.125, 0.125), (0.125, 0.375), (0.125, 0.625), (0.125, 0.875),
+            (0.375, 0.125), (0.375, 0.375), (0.375, 0.625), (0.375, 0.875),
+            (0.625, 0.125), (0.625, 0.375), (0.625, 0.625), (0.625, 0.875),
+            (0.875, 0.125), (0.875, 0.375), (0.875, 0.625), (0.875, 0.875)
+            ].iter() {
+            result.push(render_ray(
+                scene,
+                &Ray {
+                    origin: scene.camera.position,
+                    direction: (pixel_tl + *x * dx + *y * dy).normalize(),
+                },
+                0,
+            ));
+        }
+
+        let tot = result.iter().fold([0.0; 3], |[xr, xg, xb], [yr, yg, yb]| {
+            [xr + yr, xg + yg, xb + yb]
+        });
+
+        [tot[0] / 16.0, tot[1] / 16.0, tot[2] / 16.0]
     }
 
     fn save_image(&self, rendered_image: &[f64]) {

@@ -10,8 +10,8 @@ fn main() {
     let renderer = Renderer {
         output_file: "rendered.png".into(),
         num_samples: 1,
-        resolution_x: 3,
-        resolution_y: 3,
+        resolution_x: 2000,
+        resolution_y: 2000,
     };
 
     let mut scene = Scene {
