@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::scene::{Geometry, Object, Scene};
 
-use nalgebra::{Vector3, Point3};
+use nalgebra::{Point3, Vector3};
 
 pub struct Renderer {
     pub output_file: PathBuf,
@@ -130,34 +130,22 @@ fn get_closest_intersection<'a>(
 fn get_intersection_dist(obj: &Object, ray: &Ray) -> Option<f64> {
     match obj.geometry {
         Geometry::Sphere { center, radius } => {
-            let a = ray.direction.norm_squared();
-            let b = 2.0
-                * ray
-                    .direction
-                    .component_mul(&(ray.origin - center))
-                    .dot(&Vector3::new(1.0, 1.0, 1.0));
+            let b = ray.direction.dot(&(ray.origin - center));
             let c = (ray.origin - center).norm_squared() - radius * radius;
-
-            let discr = b * b - 4.0 * a * c;
+            let discr = b * b - c;
 
             if discr > 0.0 {
-                let t1 = (-b + discr.sqrt()) / (2.0 * a);
-                let t2 = (-b - discr.sqrt()) / (2.0 * a);
+                let t1 = -b + discr.sqrt();
+                let t2 = -b - discr.sqrt();
 
-                if t1 < 0.0 && t2 < 0.0 {
-                    None
-                } else if t1 > 0.0 && t2 > 0.0 {
-                    Some(t1.min(t2))
-                } else {
-                    None
-                    //panic!("camera inside sphere!");
+                if t1 > 0.0 && t2 > 0.0 {
+                    return Some(t1.min(t2));
                 }
-            } else {
-                None
             }
+            None
         }
         Geometry::Triangle { p1, p2, p3 } => {
-            let normal = get_intersection_normal(obj, Point3::origin());
+            /*let normal = get_intersection_normal(obj, Point3::origin());
             let dist = (normal.dot(&(p1 - ray.origin))) / normal.dot(&ray.direction);
             let s = ray.origin + dist * ray.direction - p1;
             let d1 = p2 - p1;
@@ -166,7 +154,25 @@ fn get_intersection_dist(obj: &Object, ray: &Ray) -> Option<f64> {
             let a = (s[0] * d1[1] - s[1] * d1[0]) / (d1[1] * d2[0] - d1[0] * d2[1]);
             let b = (s[0] * d2[1] - s[1] * d2[0]) / (d1[0] * d2[1] - d1[1] * d2[0]);
 
-            if normal.dot(&ray.direction) < 0.0 && 0.0 <= a && 0.0 <= b && a+b <= 1.0 {
+            if normal.dot(&ray.direction) < 0.0 && 0.0 <= a && 0.0 <= b && a + b <= 1.0 {
+                Some(dist)
+            } else {
+                None
+            }*/
+
+            let normal = get_intersection_normal(obj, Point3::origin());
+            let dist = (normal.dot(&(p1 - ray.origin))) / normal.dot(&ray.direction);
+            let r = ray.origin + dist * ray.direction;
+
+            let c1 = (p1 - p2).cross(&normal);
+            let c2 = (p2 - p3).cross(&normal);
+            let c3 = (p3 - p1).cross(&normal);
+
+            if normal.dot(&ray.direction) < 0.0
+                && (r - p1).dot(&c1) >= 0.0
+                && (r - p2).dot(&c2) >= 0.0
+                && (r - p3).dot(&c3) >= 0.0
+            {
                 Some(dist)
             } else {
                 None

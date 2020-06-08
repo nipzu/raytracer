@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use nalgebra::{Vector3, Point3};
+use nalgebra::{Point3, Vector3};
 
 pub struct Scene {
     pub objects: HashMap<u64, Object>,

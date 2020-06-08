@@ -49,7 +49,7 @@ fn main() {
                 radius: 1.0,
             },
             material: Material {
-                color: [1.0, 1.0, 0.5],
+                color: [1.0, 1.0, 1.0],
             },
         },
     );
