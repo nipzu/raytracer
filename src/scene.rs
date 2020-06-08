@@ -8,34 +8,12 @@ pub struct Scene {
     pub camera: Camera,
 }
 
-impl Default for Scene {
-    fn default() -> Self {
-        Scene {
-            objects: HashMap::new(),
-            sky_color: [0.1; 3],
-            camera: Camera::default(),
-        }
-    }
-}
-
 pub struct Camera {
     pub position: Point3<f64>,
     pub forward: Vector3<f64>,
     pub up: Vector3<f64>,
     pub angle_x: f64,
     pub angle_y: f64,
-}
-
-impl Default for Camera {
-    fn default() -> Self {
-        Camera {
-            position: [0.0; 3].into(),
-            forward: [-1.0, 0.0, 0.0].into(),
-            up: [0.0, 1.0, 0.0].into(),
-            angle_x: std::f64::consts::FRAC_PI_2,
-            angle_y: std::f64::consts::FRAC_PI_2,
-        }
-    }
 }
 
 pub struct Object {

@@ -1,19 +1,30 @@
 mod renderer;
 mod scene;
 
+use std::collections::HashMap;
+
 use renderer::Renderer;
-use scene::{Geometry, Material, Object, Scene};
+use scene::{Camera, Geometry, Material, Object, Scene};
 
 fn main() {
     let renderer = Renderer {
         output_file: "rendered.png".into(),
         num_samples: 1,
-
-        resolution_x: 64,
-        resolution_y: 64,
+        resolution_x: 3,
+        resolution_y: 3,
     };
 
-    let mut scene = Scene::default();
+    let mut scene = Scene {
+        objects: HashMap::new(),
+        sky_color: [0.1; 3],
+        camera: Camera {
+            position: [3.0, 0.0, 0.0].into(),
+            forward: [-1.0, 0.0, 0.0].into(),
+            up: [0.0, 1.0, 0.0].into(),
+            angle_x: std::f64::consts::FRAC_PI_4,
+            angle_y: std::f64::consts::FRAC_PI_4,
+        },
+    };
 
     scene.objects.insert(
         1,

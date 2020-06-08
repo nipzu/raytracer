@@ -22,15 +22,14 @@ impl Renderer {
         let cam = &scene.camera;
         let right = cam.forward.cross(&cam.up).normalize();
         let hdx = f64::tan(cam.angle_x / 2.0) * right / self.resolution_x as f64;
-        let hdy = f64::tan(cam.angle_y / 2.0) * cam.up / self.resolution_y as f64;
-        let tl = cam.forward - self.resolution_x as f64 * hdx + self.resolution_y as f64 * hdy;
+        let hdy = -f64::tan(cam.angle_y / 2.0) * cam.up / self.resolution_y as f64;
+        let tl = cam.forward - self.resolution_x as f64 * hdx - self.resolution_y as f64 * hdy;
 
         let mut rendered_image = vec![0.0; self.resolution_x * self.resolution_y * 3];
         for py in 0..self.resolution_y {
             for px in 0..self.resolution_x {
-                let pixel_tl = tl + px as f64 * 2.0 * hdx - py as f64 * 2.0 * hdy;
-                let pixel_br = pixel_tl + 2.0 * hdx - 2.0 * hdy;
-                let pixel = self.render_pixel(scene, pixel_tl, pixel_br);
+                let pixel_tl = tl + px as f64 * 2.0 * hdx + py as f64 * 2.0 * hdy;
+                let pixel = self.render_pixel(scene, pixel_tl, 2.0 * hdx, 2.0 * hdy);
                 let idx = 3 * (self.resolution_x * py + px);
                 rendered_image[idx..idx + 3].copy_from_slice(&pixel);
             }
@@ -43,13 +42,14 @@ impl Renderer {
         &self,
         scene: &Scene,
         pixel_tl: Vector3<f64>,
-        pixel_br: Vector3<f64>,
+        dx: Vector3<f64>,
+        dy: Vector3<f64>,
     ) -> [f64; 3] {
         render_ray(
             scene,
             &Ray {
                 origin: scene.camera.position,
-                direction: (0.5 * (pixel_tl + pixel_br) - scene.camera.position.coords).normalize(),
+                direction: (pixel_tl + 0.5 * (dx + dy)).normalize(),
             },
             0,
         )
