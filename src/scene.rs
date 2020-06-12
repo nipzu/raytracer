@@ -2,9 +2,11 @@ use std::collections::HashMap;
 
 use nalgebra::{Point3, Vector3};
 
+use image::RgbImage;
+
 pub struct Scene {
     pub objects: HashMap<u64, Object>,
-    pub sky_color: [f64; 3],
+    pub skybox: Skybox,
     pub camera: Camera,
 }
 
@@ -28,4 +30,9 @@ pub enum Material {
 pub enum Geometry {
     Sphere { center: Point3<f64>, radius: f64 },
     Triangle { p: [Point3<f64>; 3] },
+}
+
+pub enum Skybox {
+    Static { color: [f64; 3] },
+    Image { image: RgbImage },
 }

@@ -1,9 +1,12 @@
 use std::path::PathBuf;
+use std::io::Write;
 
-use crate::scene::{Geometry, Material, Object, Scene};
+use crate::scene::{Geometry, Material, Object, Scene, Skybox};
 
-use nalgebra::{Point3, Vector3};
+use nalgebra::{Point3, Rotation3, Unit, Vector3};
+
 use rand::rngs::SmallRng;
+use rand::{Rng, SeedableRng};
 
 pub struct Renderer {
     pub output_file: PathBuf,
@@ -26,15 +29,32 @@ impl Renderer {
         let hdy = -f64::tan(cam.angle_y / 2.0) * cam.up / self.resolution_y as f64;
         let tl = cam.forward - self.resolution_x as f64 * hdx - self.resolution_y as f64 * hdy;
 
+        let mut rng = SmallRng::from_entropy();
+
+        let total_pixels_over_300 = self.resolution_x * self.resolution_y / 300;
+
         let mut rendered_image = vec![0.0; self.resolution_x * self.resolution_y * 3];
+        print!("0%  [");
         for py in 0..self.resolution_y {
             for px in 0..self.resolution_x {
+                if (py * self.resolution_y + px) % total_pixels_over_300 == 0 {
+                    if (py * self.resolution_y + px) % (30 * total_pixels_over_300) == 0 {
+                        if (py != 0 || px != 0)  && (py * self.resolution_y + px) / (3 * total_pixels_over_300) < 100{
+                            print!("]\n{}% [", (py * self.resolution_y + px) / (3 * total_pixels_over_300));
+                        }
+                    }else{
+                        print!("█");
+                    }
+                    std::io::stdout().lock().flush().unwrap();
+                }
+
                 let pixel_tl = tl + px as f64 * 2.0 * hdx + py as f64 * 2.0 * hdy;
-                let pixel = self.render_pixel(scene, pixel_tl, 2.0 * hdx, 2.0 * hdy);
+                let pixel = self.render_pixel(scene, pixel_tl, 2.0 * hdx, 2.0 * hdy, &mut rng);
                 let idx = 3 * (self.resolution_x * py + px);
                 rendered_image[idx..idx + 3].copy_from_slice(&pixel);
             }
         }
+        println!("]");
 
         self.save_image(&rendered_image);
     }
@@ -45,21 +65,20 @@ impl Renderer {
         pixel_tl: Vector3<f64>,
         dx: Vector3<f64>,
         dy: Vector3<f64>,
+        rng: &mut SmallRng,
     ) -> [f64; 3] {
         let mut result = Vec::new();
-        for (x, y) in [
-            (0.125, 0.125), (0.125, 0.375), (0.125, 0.625), (0.125, 0.875),
-            (0.375, 0.125), (0.375, 0.375), (0.375, 0.625), (0.375, 0.875),
-            (0.625, 0.125), (0.625, 0.375), (0.625, 0.625), (0.625, 0.875),
-            (0.875, 0.125), (0.875, 0.375), (0.875, 0.625), (0.875, 0.875)
-            ].iter() {
+        for _ in 0..self.num_samples {
+            let x: f64 = rng.gen();
+            let y: f64 = rng.gen();
             result.push(render_ray(
                 scene,
                 &Ray {
                     origin: scene.camera.position,
-                    direction: (pixel_tl + *x * dx + *y * dy).normalize(),
+                    direction: (pixel_tl + x * dx + y * dy).normalize(),
                 },
                 0,
+                rng,
             ));
         }
 
@@ -67,7 +86,11 @@ impl Renderer {
             [xr + yr, xg + yg, xb + yb]
         });
 
-        [tot[0] / 16.0, tot[1] / 16.0, tot[2] / 16.0]
+        [
+            tot[0] / self.num_samples as f64,
+            tot[1] / self.num_samples as f64,
+            tot[2] / self.num_samples as f64,
+        ]
     }
 
     fn save_image(&self, rendered_image: &[f64]) {
@@ -88,13 +111,17 @@ impl Renderer {
     }
 }
 
-fn render_ray(scene: &Scene, ray: &Ray, ignore_id: u64) -> [f64; 3] {
+fn render_ray(scene: &Scene, ray: &Ray, ignore_id: u64, rng: &mut SmallRng) -> [f64; 3] {
     if let Some((obj, id, dist)) = get_closest_intersection(scene, ray, ignore_id) {
         match obj.material {
             Material::Diffuse { color } => {
-                let reflected =
-                    get_reflected_vector(obj, ray.origin + dist * ray.direction, ray.direction);
-                let [rr, rg, rb] = render_ray(scene, &reflected, id);
+                let reflected = get_reflected_vector(
+                    obj,
+                    ray.origin + dist * ray.direction,
+                    ray.direction,
+                    rng,
+                );
+                let [rr, rg, rb] = render_ray(scene, &reflected, id, rng);
                 let [or, og, ob] = color;
                 let ag = 0.7
                     + 0.3
@@ -109,7 +136,22 @@ fn render_ray(scene: &Scene, ray: &Ray, ignore_id: u64) -> [f64; 3] {
             Material::Emission { color } => color,
         }
     } else {
-        scene.sky_color
+        match &scene.skybox {
+            Skybox::Static { color } => *color,
+            Skybox::Image { image } => {
+                let c = *image.get_pixel(
+                    ((ray.direction.x.atan2(ray.direction.z) + std::f64::consts::PI) / (2.0 * std::f64::consts::PI)
+                        * image.width() as f64) as u32,
+                    ((ray.direction.xz().norm().atan2(ray.direction.y)) / std::f64::consts::PI
+                        * image.height() as f64) as u32,
+                );
+                [
+                    c[0] as f64 / 255.0,
+                    c[1] as f64 / 255.0,
+                    c[2] as f64 / 255.0,
+                ]
+            }
+        }
     }
 }
 
@@ -196,11 +238,32 @@ fn get_intersection_normal(obj: &Object, point: Point3<f64>) -> Vector3<f64> {
     }
 }
 
-fn get_reflected_vector(obj: &Object, intersection: Point3<f64>, ray_dir: Vector3<f64>) -> Ray {
+fn get_reflected_vector(
+    obj: &Object,
+    intersection: Point3<f64>,
+    ray_dir: Vector3<f64>,
+    rng: &mut SmallRng,
+) -> Ray {
     let n = get_intersection_normal(obj, intersection);
+    
     let w = n.dot(&ray_dir) / n.norm_squared() * n;
     Ray {
         origin: intersection,
-        direction: (ray_dir - 2.0 * w).normalize(),
+        direction: ((ray_dir - 2.0 * w).normalize() + 0.1 * Vector3::<f64>::new(rng.gen(),rng.gen(),rng.gen())).normalize(),
     }
+    
+    /*let mut direction = ray_dir.cross(&n).normalize();
+    direction = Rotation3::from_axis_angle(
+        &Unit::new_unchecked(n),
+        rng.gen::<f64>() * 2.0 * std::f64::consts::PI,
+    ) * direction
+        * rng.gen::<f64>();
+
+    direction += rng.gen::<f64>() * n;
+    direction.normalize_mut();
+
+    Ray {
+        origin: intersection,
+        direction,
+    }*/
 }
