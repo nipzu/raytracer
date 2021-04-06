@@ -12,7 +12,7 @@ use color::Color;
 use geometry::{Sphere, Triangle};
 use renderer::Renderer;
 use scene::{Camera, ImageSkyboxShader, Object, Scene};
-use shader::{EmissionShader, MirrorShader};
+use shader::{DiffuseShader, EmissionShader, MirrorShader};
 
 fn main() {
     let renderer = Renderer {
@@ -22,15 +22,16 @@ fn main() {
         resolution_y: 1000,
     };
 
+    let skybox_shader = Box::new(ImageSkyboxShader::new(
+        Reader::open("target.png")
+            .unwrap()
+            .decode()
+            .unwrap()
+            .into_rgb(),
+    ));
     let mut scene = Scene {
         objects: HashMap::new(),
-        skybox_shader: Box::new(ImageSkyboxShader::new(
-            Reader::open("target.png")
-                .unwrap()
-                .decode()
-                .unwrap()
-                .into_rgb(),
-        )),
+        skybox_shader,
         camera: Camera {
             position: [-5.0, 0.0, 0.0].into(),
             forward: [1.0, 0.0, 0.0].into(),
@@ -41,7 +42,8 @@ fn main() {
     };
 
     let s1 = Sphere::new([0.0, 0.0, 0.0].into(), 1.0);
-    let s2 = Sphere::new([0.0, 2.0, 0.0].into(), 0.25);
+    let s2 = Sphere::new([0.0, 2.0, 0.0].into(), 0.75);
+    let s3 = Sphere::new([0.0, 1.0, 2.0].into(), 1.0);
     let t1 = Triangle::new([
         [2.0, 1.0, 0.0].into(),
         [3.1, -1.0, -1.0].into(),
@@ -49,9 +51,12 @@ fn main() {
     ]);
     let e1 = MirrorShader::new(Color::new(1.0, 1.0, 1.0));
     let e2 = EmissionShader::new(Color::new(0.5, 0.5, 0.5));
+    let e3 = DiffuseShader::new(Color::new(1.0, 1.0, 1.0));
+    let e4 = EmissionShader::new(Color::new(5.0, 0.0, 0.0));
+    scene.objects.insert(2, Object::new(&s3, &e3));
     scene.objects.insert(3, Object::new(&s1, &e1));
-    scene.objects.insert(5, Object::new(&s2, &e1));
     scene.objects.insert(4, Object::new(&t1, &e2));
+    scene.objects.insert(5, Object::new(&s2, &e4));
 
     renderer.render(&scene);
 }

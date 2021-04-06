@@ -11,7 +11,7 @@ use nalgebra::{Point3, Vector3};
 use crate::geometry::Geometry;
 
 pub struct Scene<'s> {
-    pub objects: HashMap<u64, Object<'s, 's>>,
+    pub objects: HashMap<u64, Object<'s>>,
     pub skybox_shader: Box<dyn Shader>,
     pub camera: Camera,
 }
@@ -70,13 +70,13 @@ pub struct Camera {
     pub angle_y: f64,
 }
 
-pub struct Object<'g, 's> {
-    pub geometry: &'g dyn Geometry,
+pub struct Object<'s> {
+    pub geometry: &'s dyn Geometry,
     pub shader: &'s dyn Shader,
 }
 
-impl<'g, 's> Object<'g, 's> {
-    pub fn new(geometry: &'g dyn Geometry, shader: &'s dyn Shader) -> Object<'g, 's> {
+impl<'s> Object<'s> {
+    pub fn new(geometry: &'s dyn Geometry, shader: &'s dyn Shader) -> Object<'s> {
         Object { geometry, shader }
     }
 }
@@ -107,8 +107,8 @@ impl Shader for ImageSkyboxShader {
         let pitch = (ray.direction.xz().norm().atan2(ray.direction.y)) / std::f64::consts::PI;
 
         let c = self.image.get_pixel(
-            ((yaw) * self.image.width() as f64) as u32,
-            (pitch * self.image.height() as f64) as u32,
+            ((yaw * self.image.width() as f64) as u32).min(self.image.width() - 1),
+            ((pitch * self.image.height() as f64) as u32).min(self.image.height() - 1),
         );
         Color::from_rbg(c[0], c[1], c[2])
     }

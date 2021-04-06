@@ -34,9 +34,9 @@ impl Color {
     }
 }
 
-impl Add<&Color> for &Color {
+impl Add<Color> for Color {
     type Output = Color;
-    fn add(self, other: &Color) -> Color {
+    fn add(self, other: Color) -> Color {
         Color {
             r: self.r + other.r,
             g: self.g + other.g,
@@ -45,9 +45,9 @@ impl Add<&Color> for &Color {
     }
 }
 
-impl Mul<&Color> for &Color {
+impl Mul<Color> for Color {
     type Output = Color;
-    fn mul(self, other: &Color) -> Color {
+    fn mul(self, other: Color) -> Color {
         Color {
             r: self.r * other.r,
             g: self.g * other.g,
@@ -56,7 +56,7 @@ impl Mul<&Color> for &Color {
     }
 }
 
-impl Mul<f64> for &Color {
+impl Mul<f64> for Color {
     type Output = Color;
     fn mul(self, other: f64) -> Color {
         Color {
@@ -67,9 +67,9 @@ impl Mul<f64> for &Color {
     }
 }
 
-impl Mul<&Color> for f64 {
+impl Mul<Color> for f64 {
     type Output = Color;
-    fn mul(self, other: &Color) -> Color {
+    fn mul(self, other: Color) -> Color {
         other * self
     }
 }
